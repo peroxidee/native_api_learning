@@ -1,0 +1,3 @@
+C:/Users/djkri/CLionProjects/native_api_learning/cmake-build-debug/CMakeFiles/finap.dir
+C:/Users/djkri/CLionProjects/native_api_learning/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/djkri/CLionProjects/native_api_learning/cmake-build-debug/CMakeFiles/rebuild_cache.dir
