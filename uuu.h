@@ -57,7 +57,7 @@ typedef struct _OBJECT_ATTRIBUTES
 
 //define the different functions
 
-typedef NTSTATUS (NTAPI *NtAllocateVirtualMemory)(
+typedef NTSTATUS(NTAPI *NtAllocateVirtualMemory)(
 _In_ HANDLE ProcessHandle,
 _Inout_ _At_(*BaseAddress, _Readable_bytes_(*RegionSize) _Writable_bytes_(*RegionSize) _Post_readable_byte_size_(*RegionSize)) PVOID *BaseAddress,
 _In_ ULONG_PTR ZeroBits,
@@ -66,14 +66,20 @@ _In_ ULONG AllocationType,
 _In_ ULONG Protect
 );
 
-typedef NTSTATUS (NTAPI *NtOpenProcess)(
+
+
+typedef NTSTATUS(NTAPI *NtClose)(
+_In_ HANDLE ProcessHandle
+);
+
+typedef NTSTATUS(NTAPI *NtOpenProcess)(
 _Out_ PHANDLE ProcessHandle,
 _In_ ACCESS_MASK DesiredAccess,
 _In_ POBJECT_ATTRIBUTES ObjectAttributes,
 _In_opt_ PCLIENT_ID ClientId
 );
 
-typedef NTSTATUS (NTAPI *NtCreateThreadEx)(
+typedef NTSTATUS(NTAPI *NtCreateThreadEx)(
 _Out_ PHANDLE ThreadHandle,
 _In_ ACCESS_MASK DesiredAccess,
 _In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
@@ -86,7 +92,7 @@ _In_ SIZE_T StackSize,
 _In_ SIZE_T MaximumStackSize,
 _In_opt_ PPS_ATTRIBUTE_LIST AttributeList);
 
-typedef NTSTATUS (NTAPI *NtWriteVirtualMemory)(
+typedef NTSTATUS(NTAPI *NtWriteVirtualMemory)(
 _In_ HANDLE ProcessHandle,
 _In_opt_ PVOID BaseAddress,
 _In_reads_bytes_(BufferSize) PVOID Buffer,
